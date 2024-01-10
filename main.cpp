@@ -1,13 +1,78 @@
-#include <iostream>
 #include "BF.cpp"
 #include <chrono>
-#include <set>
 
 int main()
 {
     srand(time(NULL));
-    int numOfVariables = 21;
-    int W_set_SUM = 3;
+    const int numberOfVariables = 5;
+    int printInRow = 6;
+    BF func = BF::GenBalancedFunc(numberOfVariables); // сгенерировать уравновешенную функцию с заданным числом переменных
+    // BF func("10000010011101111100101001001101");
+    while (true)
+    {
+
+        std::cout << '\n';
+        func.print();
+        std::cout << '\n';
+
+        auto wht = BF::WH_transform(func);
+        /*
+       for (int i = 0; i < wht.size(); i++)
+            std::cout << wht[i] << " ";
+        std::cout << '\n';
+        */
+
+        std::vector<uint32_t> W_1_pos, W_1_neg, W_3_pos, W_3_neg;
+        BF::FillWSets(W_1_pos, W_1_neg, W_3_pos, W_3_neg, wht); // заполняем множесва W соответствующими элементами
+
+        auto resPairs = func.PairsToImprove();              // Множество пар улучшающих полученых решением СЛУ
+        auto straightPairs = func.PairsToImproveStraight(); // Множество пар улучшающих полученых прямым алгоритмом
+        int transfer = 0;
+        if (resPairs.empty())
+        {
+            std::cout << "NO PAIRS\n";
+        }
+        for (auto &i : resPairs)
+        {
+            transfer++;
+            std::cout << "(" << std::bitset<numberOfVariables>(i.first) << "[" << i.first << "], " << std::bitset<numberOfVariables>(i.second) << "[" << i.second << "]) ";
+            if (transfer % printInRow == 0)
+                std::cout << std::endl;
+        }
+        auto testFunc = func.TestPairsToImproveFunctions(resPairs, straightPairs); // проверить сов
+        if (!testFunc)
+        {
+            std::cout << "ERROR IN FUNCTION TESTING\n";
+            return 0;
+        }
+
+        std::cout << "\nW3_pos_size= " << W_3_pos.size() << " \nW3_neg_size= " << W_3_neg.size() << " \nNf= " << BF::Nonlinearity(func, wht) << std::endl;
+        uint32_t x1 = 0, x2 = 0;
+
+        std::cout << "Enter pairs to change:\n x1= ";
+        std::cin >> x1;
+        std::cout << " x2= ";
+        std::cin >> x2;
+        try
+        {
+            func = BF::SwapOnSets(func, x1, x2); // обменять значения на наборах x1, x2
+        }
+        catch (const char *err)
+        {
+            std::cout << err << std::endl;
+            return 0;
+        }
+    }
+
+    return 0;
+}
+
+/*
+int main()
+{
+    srand(time(NULL));
+    int numOfVariables = 6;
+    int W_set_SUM = 2;
     std::cout << "Enter number of variables:";
     std::cin >> numOfVariables;
     std::cout << "Enter sum of W sets:";
@@ -67,3 +132,4 @@ int main()
 
     return 0;
 }
+*/
