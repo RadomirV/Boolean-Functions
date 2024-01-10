@@ -48,7 +48,12 @@ public:
     {
         return this->vec;
     }
+
+    std::vector<std::pair<uint32_t, uint32_t>> PairsToImprove();
+    std::vector<std::pair<uint32_t, uint32_t>> PairsToImproveStraight();
+    bool TestPairsToImproveFunctions(std::vector<std::pair<uint32_t, uint32_t>> &, std::vector<std::pair<uint32_t, uint32_t>> &);
 };
 
 int CountBoolMatrixRankAndStepTransform(std::vector<unsigned int> &Matrix, int columns = 32);
 int CountBoolMatrixRankAndStepTransform(std::vector<std::pair<unsigned int, uint8_t>> &PairMatrix, int columns = 32);
+std::vector<std::pair<uint32_t, uint32_t>> ConvertToPairs(std::pair<std::vector<unsigned int>, std::vector<unsigned int>> &GPVec);
