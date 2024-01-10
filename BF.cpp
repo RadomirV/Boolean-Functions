@@ -204,7 +204,10 @@ void BF::print()
                 std::cout << "0";
             mask <<= 1;
         }
-        std::cout << '\n';
+        if (j % 4 == 3)
+            std::cout << '\n';
+        else
+            std::cout << ' ';
     }
 
     // for (int i = 0; i < this->vec.size(); ++i)
@@ -690,7 +693,7 @@ int CountBoolMatrixRankAndStepTransform(std::vector<std::pair<unsigned int, uint
         // SetBit(mainVarVec, elderBitPos, 1);
         if (elderBitPos == -1)
         {
-            //std::cout << "No solution\n";
+            // std::cout << "No solution\n";
             PairMatrix = std::vector<std::pair<unsigned int, uint8_t>>();
             return -1;
         }
@@ -777,7 +780,7 @@ std::pair<std::vector<unsigned int>, std::vector<unsigned int>> BF::OptGoodPairs
 
     if (Rank == -1)
     {
-        //std::cout << "no solution for equations\n";
+        // std::cout << "no solution for equations\n";
         return std::pair<std::vector<unsigned int>, std::vector<unsigned int>>();
     }
 
@@ -801,7 +804,7 @@ std::pair<std::vector<unsigned int>, std::vector<unsigned int>> BF::OptGoodPairs
 
     if (Rank == -1)
     {
-        //std::cout << "no solution for equations\n";
+        // std::cout << "no solution for equations\n";
         return std::pair<std::vector<unsigned int>, std::vector<unsigned int>>();
     }
 
@@ -812,8 +815,7 @@ std::pair<std::vector<unsigned int>, std::vector<unsigned int>> BF::OptGoodPairs
         if (func[solutionsSecond[i]] == 1)
             finalSolutionsSecond.push_back(solutionsSecond[i]);
     std::pair<std::vector<unsigned int>, std::vector<unsigned int>> ResultGoodPairs;
-    ResultGoodPairs=std::make_pair(finalSolutionsFirst,finalSolutionsSecond);
-    
+    ResultGoodPairs = std::make_pair(finalSolutionsFirst, finalSolutionsSecond);
 
     return ResultGoodPairs;
 }
@@ -853,19 +855,23 @@ void BF::FillWSets(std::vector<uint32_t> &W_1_pos, std::vector<uint32_t> &W_1_ne
 
 BF BF::SwapOnSets(BF &func, uint32_t set_x1, uint32_t set_x2)
 {
+    if (set_x1 >= ((uint32_t)1 << func.n) || set_x2 >= ((uint32_t)1 << func.n))
+    {
+        throw "pair is out of range";
+    }
     auto result = func;
     result.set_val(set_x1, func[set_x2]);
     result.set_val(set_x2, func[set_x1]);
     return result;
 }
 
-BF BF::GenBalancedFunc(int numberOfVariables)
+BF BF::GenBalancedFunc(int numberOfVariables) // Генерирруем функцию а потом подправляем ее до уравновешенной
 {
     BF func(numberOfVariables, 10);
 
-    int32_t diff = ((uint32_t)1 << (numberOfVariables - 1)) - BF::weight(func);
+    int32_t diff = ((uint32_t)1 << (numberOfVariables - 1)) - BF::weight(func); // разница чего больше единиц или нулей
 
-    while (diff < 0)
+    while (diff < 0) // если больше единиц, то в случайных местах где f(x)=1 заменить на 0
     {
         uint32_t mask = 0;
         mask = ~mask;
@@ -877,7 +883,7 @@ BF BF::GenBalancedFunc(int numberOfVariables)
             diff++;
         }
     }
-    while (diff > 0)
+    while (diff > 0) // если больше нулей, то в случайных местах где f(x)=0 заменить на 1
     {
         uint32_t mask = 0;
         mask = ~mask;
@@ -952,4 +958,118 @@ std::pair<std::vector<unsigned int>, std::vector<unsigned int>> BF::good_pairsVe
     std::set_intersection(A_11.begin(), A_11.end(), B_10.begin(), B_10.end(), std::insert_iterator<std::vector<unsigned int>>(AB_1, AB_1.begin()));
 
     return std::make_pair(AB_0, AB_1);
+}
+
+std::vector<std::pair<uint32_t, uint32_t>> ConvertToPairs(std::pair<std::vector<unsigned int>, std::vector<unsigned int>> &GPVec)
+{ // из 2х множеств построить декартово произведение(массив пар)
+    std::vector<std::pair<uint32_t, uint32_t>> pairs;
+
+    for (uint32_t i = 0; i < GPVec.first.size(); i++)
+    {
+        for (uint32_t j = 0; j < GPVec.second.size(); j++)
+        {
+            pairs.push_back(std::make_pair(GPVec.first[i], GPVec.second[j]));
+        }
+    }
+    return pairs;
+}
+
+std::vector<std::pair<uint32_t, uint32_t>> BF::PairsToImprove()
+{ // построить множесто пар улучшающих нелинейность
+    auto wht_coef = BF::WH_transform(*this);
+    auto GoodPairs = BF::OptGoodPairsVec(*this, wht_coef); // Вернуть пару множеств(2 множества из теоремы слева от разности) с помощью решения СЛУ
+
+    std::vector<uint32_t> W_1_pos, W_1_neg, W_3_pos, W_3_neg;
+    BF::FillWSets(W_1_pos, W_1_neg, W_3_pos, W_3_neg, wht_coef);
+
+    std::vector<std::pair<uint32_t, uint32_t>> pairs = ConvertToPairs(GoodPairs); // конвертируем в декартово произведение
+    std::vector<std::pair<uint32_t, uint32_t>> res;
+    for (uint64_t i = 0; i < pairs.size(); i++) // проверяю удовлетворяет ли пара условиям для улучшение нелинейность
+    {
+        int flag = 0;
+
+        for (int j = 0; j < W_3_pos.size(); j++)
+        {
+            bool correct = weight_mod(W_3_pos[j] & pairs[i].first) == false || weight_mod(W_3_pos[j] & pairs[i].second) == true; // (с,x1)=0 ⋁ (с,x2)=1
+            if (correct)                                                                                                         //
+                flag++;
+            else
+                break;
+        }
+        if (flag != W_3_pos.size())// Если пара не удовлетворила какому-то элементу из W_3^+ то смотрим следующую пару
+            continue;
+
+        flag = 0;
+
+        for (int j = 0; j < W_3_neg.size(); j++)
+        {
+            bool correct = weight_mod(W_3_neg[j] & pairs[i].first) == true || weight_mod(W_3_neg[j] & pairs[i].second) == false; //(d,x1)=1 ⋁ (d,x2)=0
+            if (correct)
+                flag++;
+            else
+                break;
+        }
+        if (flag != W_3_neg.size())// Если пара не удовлетворила какому-то элементу из W_3^- то смотрим следующую пару
+            continue;
+
+        res.push_back(pairs[i]);// Пара удовлетворила всем условиям -> она улучшает нелинейность
+    }
+
+    return res;
+}
+std::vector<std::pair<uint32_t, uint32_t>> BF::PairsToImproveStraight()// отличие только в том как вычисялются множества слева от разности
+{
+    auto wht_coef = BF::WH_transform(*this);
+    auto GoodPairs = BF::good_pairsVec(*this, wht_coef);
+
+    std::vector<uint32_t> W_1_pos, W_1_neg, W_3_pos, W_3_neg;
+    BF::FillWSets(W_1_pos, W_1_neg, W_3_pos, W_3_neg, wht_coef);
+
+    std::vector<std::pair<uint32_t, uint32_t>> pairs = ConvertToPairs(GoodPairs), res;
+    for (uint64_t i = 0; i < pairs.size(); i++)
+    {
+        int flag = 0;
+
+        for (int j = 0; j < W_3_pos.size(); j++)
+        {
+            bool correct = weight_mod(W_3_pos[j] & pairs[i].first) == false || weight_mod(W_3_pos[j] & pairs[i].second) == true;
+            if (correct)
+                flag++;
+            else
+                break;
+        }
+        if (flag != W_3_pos.size())
+            continue;
+        ;
+
+        flag = 0;
+
+        for (int j = 0; j < W_3_neg.size(); j++)
+        {
+            bool correct = weight_mod(W_3_neg[j] & pairs[i].first) == true || weight_mod(W_3_neg[j] & pairs[i].second) == false;
+            if (correct)
+                flag++;
+            else
+                break;
+        }
+        if (flag != W_3_neg.size())
+            continue;
+
+        res.push_back(pairs[i]);
+    }
+
+    return res;
+}
+bool BF::TestPairsToImproveFunctions(std::vector<std::pair<uint32_t, uint32_t>> &Optimized, std::vector<std::pair<uint32_t, uint32_t>> &Straight)
+{
+    if (Optimized.size() != Straight.size())
+        return false;
+    for (auto &j : Optimized)
+    {
+        auto it = std::find_if(begin(Straight), end(Straight), [j](std::pair<uint32_t, uint32_t> my_pair)
+                               { if (j.first == my_pair.first && j.second == my_pair.second) return true; else return false; });
+        if (it == std::end(Straight))
+            return false;
+    }
+    return true;
 }
