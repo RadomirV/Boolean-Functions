@@ -1,0 +1,6 @@
+*.exe
+.vscode
+*.obj
+*.ilk
+*.pdb
+just a text.txt
