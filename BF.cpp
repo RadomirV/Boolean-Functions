@@ -1362,7 +1362,7 @@ void BF::nonlinearityImprove(uint64_t linDiff, uint64_t &neutralAttemps, uint64_
             pair = improvePairs[rand() % improvePairs.size()];
             *this = BF::SwapOnSets(*this, pair.first, pair.second);
             linDiff -= 2;
-            // добавить обнуление j = 0;
+            j = 0;
         }
         else
         {

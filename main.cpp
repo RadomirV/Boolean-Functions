@@ -6,7 +6,7 @@ typedef unsigned int uint32_t;
 typedef int int32_t;
 // typedef unsigned long uint64_t;
 
-int TenK_Func()
+int main()
 {
     srand(time(NULL));
     const int numberOfVariables = 8;
@@ -16,6 +16,7 @@ int TenK_Func()
     uint64_t improveAtt;
     std::map<uint32_t, std::map<uint32_t, uint32_t>> stat;
     std::pair<uint32_t, uint32_t> exitStat;
+    std::pair<double, double> exitNf(0, 0);
     int attemps = 10000;
     unsigned int Nf = 0;
     auto wht_coef = BF::WH_transform(func);
@@ -27,16 +28,16 @@ int TenK_Func()
         func = BF::GenBalancedFunc(numberOfVariables);
         wht_coef = BF::WH_transform(func);
         Nf = BF::Nonlinearity(func, wht_coef);
-        while (Nf < 80 || Nf > 106)
+        while ((Nf < 80) || (Nf > 108))
         {
             func = BF::GenBalancedFunc(numberOfVariables);
             wht_coef = BF::WH_transform(func);
             Nf = BF::Nonlinearity(func, wht_coef);
         }
-        // std::cout << "NF = " << Nf << std::endl;
+        //std::cout << "NF = " << Nf << std::endl;
         lindiff = 1000;
-        neutralAtt = 8 * numberOfVariables;
-        improveAtt = 2 * numberOfVariables;
+        neutralAtt = 16 * numberOfVariables;
+        improveAtt = 4 * numberOfVariables;
 
         func.nonlinearityImprove(lindiff, neutralAtt, improveAtt);
         wht_coef = BF::WH_transform(func);
@@ -44,15 +45,25 @@ int TenK_Func()
 
         stat[Nf][Nf_new]++;
         if (neutralAtt == 0)
+        {
             exitStat.first++;
+            exitNf.first += Nf_new;
+        }
         if (improveAtt == 0)
+        {
             exitStat.second++;
+            exitNf.second += Nf_new;
+        }
         // std::this_thread::sleep_for(std::chrono::milliseconds(100));
         std::cout << "I= " << i << " ";
     }
     int transfer = 0;
     int printInRow = 12;
     std::cout << "\nexit of neutral = " << exitStat.first << " exit of improve = " << exitStat.second << std::endl;
+    exitNf.first = exitNf.first / exitStat.first;
+    exitNf.second = exitNf.second / exitStat.second;
+    std::cout << "exit NF of neutral = " << exitNf.first << " exit Nf of improve = " << exitNf.second << std::endl;
+
     for (auto it = stat.begin(); it != stat.end(); ++it)
     {
         transfer = 0;
@@ -70,7 +81,7 @@ int TenK_Func()
     return 0;
 }
 
-int main()
+int main_nnn()
 {
     srand(time(NULL));
     const int numberOfVariables = 10;
@@ -81,13 +92,16 @@ int main()
     uint64_t neutralAtt;
     uint64_t improveAtt;
     std::pair<uint32_t, uint32_t> exitStat;
+    std::pair<double, double> exitNf(0, 0);
     int isSecondHalf = 0;
+    int neuAtt = 8 * numberOfVariables;
+    int impAtt = 5;
     for (int i = 1; i < iter; ++i)
     {
 
         lindiff = 1000;
-        neutralAtt = 8 * numberOfVariables;
-        improveAtt = 2 * numberOfVariables;
+        neutralAtt = neuAtt;
+        improveAtt = impAtt;
 
         func = func.generateAffine(i, false);
         func.nonlinearityImprove(lindiff, neutralAtt, improveAtt);
@@ -95,13 +109,19 @@ int main()
         unsigned int Nf = BF::Nonlinearity(func, wht_coef);
         stat[Nf]++;
         if (neutralAtt == 0)
+        {
             exitStat.first++;
+            exitNf.first += Nf;
+        }
         if (improveAtt == 0)
+        {
             exitStat.second++;
+            exitNf.second += Nf;
+        }
 
         lindiff = 1000;
-        neutralAtt = 8 * numberOfVariables;
-        improveAtt = 2 * numberOfVariables;
+        neutralAtt = neuAtt;
+        improveAtt = impAtt;
 
         func = func.generateAffine(i, true);
         func.nonlinearityImprove(lindiff, neutralAtt, improveAtt);
@@ -109,14 +129,24 @@ int main()
         Nf = BF::Nonlinearity(func, wht_coef);
         stat[Nf]++;
         if (neutralAtt == 0)
+        {
             exitStat.first++;
+            exitNf.first += Nf;
+        }
         if (improveAtt == 0)
+        {
             exitStat.second++;
+            exitNf.second += Nf;
+        }
 
         // if (i % 100 == 0)
         std::cout << "\t\t\t\titer = " << i << "\n";
     }
+    exitNf.first = exitNf.first / exitStat.first;
+    exitNf.second = exitNf.second / exitStat.second;
+
     std::cout << "exit of neutral = " << exitStat.first << " exit of improve = " << exitStat.second << std::endl;
+    std::cout << "exit NF of neutral = " << exitNf.first << " exit Nf of improve = " << exitNf.second << std::endl;
     for (auto it = stat.begin(); it != stat.end(); ++it)
     {
         std::cout << "[Nf = " << it->first << "] = " << it->second << "\n";
