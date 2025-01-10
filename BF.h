@@ -5,7 +5,15 @@
 #include <bitset>
 #include <algorithm>
 #include <set>
+#include <cstdint>
+#include <cmath>
+#include <unordered_set>
+#include <map>
 #pragma once
+typedef unsigned char uint8_t;
+typedef unsigned int uint32_t;
+typedef int int32_t;
+// typedef unsigned long uint64_t;
 
 class BF
 {
@@ -29,7 +37,7 @@ public:
     static unsigned int Nonlinearity(const BF &, std::vector<int> &WHT);
     static void print_BAA(const BF &, std::vector<int> &WHT);
     inline static bool get_val(const BF &, unsigned int);
-    void print();
+    void print(bool onlyVector = true);
     void print_per_bit();
     bool operator==(const BF &) const;
     bool operator!=(const BF &) const;
@@ -48,10 +56,19 @@ public:
     {
         return this->vec;
     }
-
+    BF generateAffine(uint32_t maskOfVariables, bool addOne);
+    std::pair<uint32_t, uint32_t> generatePair();
+    std::pair<uint32_t, uint32_t> generateImprovePair(uint32_t);
+    std::vector<std::pair<uint32_t, uint32_t>> PairsToWorsen();
     std::vector<std::pair<uint32_t, uint32_t>> PairsToImprove();
     std::vector<std::pair<uint32_t, uint32_t>> PairsToImproveStraight();
+    bool isNeutralOrImprovePair(const std::vector<uint32_t> &, const std::vector<uint32_t> &, std::pair<uint32_t, uint32_t>);
+    bool isImprovePair(std::vector<int> &wht_coef,  std::pair<uint32_t, uint32_t>& pair);
+    bool isImprovePairEasy(std::vector<int> &wht_coef,  std::pair<uint32_t, uint32_t>& pair);
+    void nonlinearityImprove(uint64_t, uint64_t &, uint64_t &);
     bool TestPairsToImproveFunctions(std::vector<std::pair<uint32_t, uint32_t>> &, std::vector<std::pair<uint32_t, uint32_t>> &);
+    void nextBalanced();
+    static std::pair<BF, BF> generateBorderBalancesFunctions();
 };
 
 int CountBoolMatrixRankAndStepTransform(std::vector<unsigned int> &Matrix, int columns = 32);
