@@ -1,6 +1,5 @@
-*.exe
 .vscode
-*.obj
-*.ilk
-*.pdb
+.vs
+/build
+/layers
 just a text.txt
