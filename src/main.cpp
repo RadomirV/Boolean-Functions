@@ -28,7 +28,7 @@ int main_main_not()
     std::pair<double, double> exitNf(0, 0);
     int attemps = 10000;
     unsigned int Nf = 0;
-    auto wht_coef = BF::WH_transform(func);
+    auto wht_coef = BF::WHTransform(func);
     // for n = 8 optimal     80<=Nf<=108   while ((Nf < 80) || (Nf > 108))
     // for n = 9 optimal    182 <=Nf<= 202
     // for n = 10 optimal    384 <=Nf<=412
@@ -36,14 +36,14 @@ int main_main_not()
     uint64_t zero = 0;
     for (int i = 0; i < attemps; i++)
     {
-        func = BF::GenBalancedFunc(numberOfVariables);
-        wht_coef = BF::WH_transform(func);
-        Nf = BF::Nonlinearity(func, wht_coef);
+        func = BF::genBalancedFunc(numberOfVariables);
+        wht_coef = BF::WHTransform(func);
+        Nf = BF::nonlinearity(func, wht_coef);
         while ((Nf < 80) || (Nf > 106))
         {
-            func = BF::GenBalancedFunc(numberOfVariables);
-            wht_coef = BF::WH_transform(func);
-            Nf = BF::Nonlinearity(func, wht_coef);
+            func = BF::genBalancedFunc(numberOfVariables);
+            wht_coef = BF::WHTransform(func);
+            Nf = BF::nonlinearity(func, wht_coef);
         }
         functions.push_back(func);
     }
@@ -52,22 +52,22 @@ int main_main_not()
     {
 
         func = functions[i];
-        wht_coef = BF::WH_transform(func);
-        Nf = BF::Nonlinearity(func, wht_coef);
+        wht_coef = BF::WHTransform(func);
+        Nf = BF::nonlinearity(func, wht_coef);
         // std::cout << "NF = " << Nf << std::endl;
         lindiff = 10000;
         neutralAtt = 128 * numberOfVariables;
         improveAtt = 16 * numberOfVariables;
 
         func.nonlinearityImprove(lindiff, zero, improveAtt);
-        wht_coef = BF::WH_transform(func);
-        unsigned int Nf_new = BF::Nonlinearity(func, wht_coef);
+        wht_coef = BF::WHTransform(func);
+        unsigned int Nf_new = BF::nonlinearity(func, wht_coef);
         stat_simple[Nf][Nf_new]++;
 
         func = functions[i];
         func.nonlinearityImprove(lindiff, neutralAtt, improveAtt);
-        wht_coef = BF::WH_transform(func);
-        Nf_new = BF::Nonlinearity(func, wht_coef);
+        wht_coef = BF::WHTransform(func);
+        Nf_new = BF::nonlinearity(func, wht_coef);
         stat_alg[Nf][Nf_new]++;
         // std::this_thread::sleep_for(std::chrono::milliseconds(100));
         std::cout << "I= " << i << " ";
@@ -133,8 +133,8 @@ int main()
 
         func = func.generateAffine(i, false);
         func.nonlinearityImprove(lindiff, neutralAtt, improveAtt);
-        auto wht_coef = BF::WH_transform(func);
-        unsigned int Nf = BF::Nonlinearity(func, wht_coef);
+        auto wht_coef = BF::WHTransform(func);
+        unsigned int Nf = BF::nonlinearity(func, wht_coef);
         stat[Nf]++;
         if (neutralAtt == 0)
         {
@@ -153,8 +153,8 @@ int main()
 
         func = func.generateAffine(i, true);
         func.nonlinearityImprove(lindiff, neutralAtt, improveAtt);
-        wht_coef = BF::WH_transform(func);
-        Nf = BF::Nonlinearity(func, wht_coef);
+        wht_coef = BF::WHTransform(func);
+        Nf = BF::nonlinearity(func, wht_coef);
         stat[Nf]++;
         if (neutralAtt == 0)
         {
@@ -188,27 +188,27 @@ int main_nnn()
     srand(time(NULL));
     const int numberOfVariables = 18; // Nf= 128696
     unsigned int NF = 0;
-    BF func = BF::GenBalancedFunc(numberOfVariables);
-    auto wht = BF::WH_transform(func);
+    BF func = BF::genBalancedFunc(numberOfVariables);
+    auto wht = BF::WHTransform(func);
     while (NF < 0)
     {
-        func = BF::GenBalancedFunc(numberOfVariables);
+        func = BF::genBalancedFunc(numberOfVariables);
         std::cout << "Generated\n";
-        wht = BF::WH_transform(func);
-        std::cout << "WH_transform\n";
-        NF = BF::Nonlinearity(func, wht);
+        wht = BF::WHTransform(func);
+        std::cout << "WHTransform\n";
+        NF = BF::nonlinearity(func, wht);
         std::cout << "Nf_gen= " << NF << std::endl;
     }
     std::vector<uint32_t> W_1_pos, W_1_neg, W_3_pos, W_3_neg;
-    BF::FillWSets(W_1_pos, W_1_neg, W_3_pos, W_3_neg, wht);
+    BF::fillWSets(W_1_pos, W_1_neg, W_3_pos, W_3_neg, wht);
     std::cout << "W_sets_ filled\n";
     std::cout << "Nf= " << NF << std::endl;
     uint64_t neutral = 100000;
     uint64_t improve = 10000;
     func.nonlinearityImprove(100000, neutral, improve);
     //  func.print();
-    wht = BF::WH_transform(func);
-    std::cout << "Nf= " << BF::Nonlinearity(func, wht) << std::endl;
+    wht = BF::WHTransform(func);
+    std::cout << "Nf= " << BF::nonlinearity(func, wht) << std::endl;
 
     return 0;
 }
@@ -231,9 +231,9 @@ int AllBalanced()
     bad_freq.resize(300);
     while (func != limits.second)
     {
-        auto wht_coef = BF::WH_transform(func);
+        auto wht_coef = BF::WHTransform(func);
 
-        auto badPairs = func.PairsToWorsen();      // Pairs which decrease the nonlinearity
+        auto badPairs = func.pairsToWorsen();      // Pairs which decrease the nonlinearity
         auto improvePairs = func.pairsToImprove(); // Pairs which improve nonlinearity
         GoodPairsCount += improvePairs.size();
         BadPairsCount += badPairs.size();
@@ -241,7 +241,7 @@ int AllBalanced()
         bad_freq[badPairs.size()]++;
         /*
         func.print();
-        std::cout << "\t\t\t\t\t\tIterN = " << iterationCount << "\nGood = " << improvePairs.size() << " Bad = " << badPairs.size() << " Nonlinearity = " << BF::Nonlinearity(func, wht_coef) << "\n";
+        std::cout << "\t\t\t\t\t\tIterN = " << iterationCount << "\nGood = " << improvePairs.size() << " Bad = " << badPairs.size() << " nonlinearity = " << BF::nonlinearity(func, wht_coef) << "\n";
         for (auto &i : wht_coef)
         {
             std::cout << i << " ";
@@ -268,8 +268,8 @@ int AllBalanced()
         {
             uint32_t transfer = 8;
             uint32_t inRow = 0;
-            func.print_per_bit();
-            std::cout << "\t\t\t\t\t\tIterN = " << iterationCount << "\nGood = " << improvePairs.size() << " Bad = " << badPairs.size() << " Nonlinearity = " << BF::Nonlinearity(func, wht_coef) << "\n";
+            func.printPerBit();
+            std::cout << "\t\t\t\t\t\tIterN = " << iterationCount << "\nGood = " << improvePairs.size() << " Bad = " << badPairs.size() << " nonlinearity = " << BF::nonlinearity(func, wht_coef) << "\n";
             for (int i = 0; i < 300; ++i)
             {
                 if (good_freq[i] != 0)
@@ -296,27 +296,27 @@ int AllBalanced()
         }
         if (improvePairs.size() == 0 && badPairs.size() == 0)
         {
-            func.print_per_bit();
+            func.printPerBit();
             std::cout << "NO PAIRS AT ALL GOOD AND BAD NO PAIRS AT ALL GOOD AND BAD NO PAIRS AT ALL GOOD AND BAD\n";
-            std::cout << "\t\t\t\t\t\tIterN = " << iterationCount << "\nGood = " << improvePairs.size() << " Bad = " << badPairs.size() << " Nonlinearity = " << BF::Nonlinearity(func, wht_coef) << "\n";
+            std::cout << "\t\t\t\t\t\tIterN = " << iterationCount << "\nGood = " << improvePairs.size() << " Bad = " << badPairs.size() << " nonlinearity = " << BF::nonlinearity(func, wht_coef) << "\n";
         }
-        if (BF::Nonlinearity(func, wht_coef) > 12)
+        if (BF::nonlinearity(func, wht_coef) > 12)
         {
-            std::cout << "Good = " << improvePairs.size() << " Bad = " << badPairs.size() << " Nonlinearity = " << BF::Nonlinearity(func, wht_coef) << "\t\t\t\t\t\tIterN = " << iterationCount << "\n";
+            std::cout << "Good = " << improvePairs.size() << " Bad = " << badPairs.size() << " nonlinearity = " << BF::nonlinearity(func, wht_coef) << "\t\t\t\t\t\tIterN = " << iterationCount << "\n";
         }
 
         func.nextBalanced();
         iterationCount++;
     }
-    auto wht_coef = BF::WH_transform(func);
+    auto wht_coef = BF::WHTransform(func);
 
-    auto badPairs = func.PairsToWorsen();      // Pairs which decrease the nonlinearity
+    auto badPairs = func.pairsToWorsen();      // Pairs which decrease the nonlinearity
     auto improvePairs = func.pairsToImprove(); // Pairs which improve nonlinearity
 
     GoodPairsCount += improvePairs.size();
     BadPairsCount += badPairs.size();
     func.print();
-    func.print_per_bit();
+    func.printPerBit();
     std::cout << "\t\t\t\t\t\tIterN = " << iterationCount << "\nGood = " << improvePairs.size() << " Bad = " << badPairs.size() << "\n";
 
     std::cout << "GoodPairsCount= " << GoodPairsCount << "\n";
@@ -356,11 +356,11 @@ int mainmain()
     srand(time(NULL));
     const int numberOfVariables = 5;
     int printInRow = 6;
-    // BF func = BF::GenBalancedFunc(numberOfVariables); // сгенерировать уравновешенную функцию с заданным числом переменных
+    // BF func = BF::genBalancedFunc(numberOfVariables); // сгенерировать уравновешенную функцию с заданным числом переменных
     std::string str;
     // std::cin >> str;
     // BF func(str);
-    // BF func = BF::GenBalancedFunc(numberOfVariables);
+    // BF func = BF::genBalancedFunc(numberOfVariables);
     BF func("1010");
     while (true)
     {
@@ -368,7 +368,7 @@ int mainmain()
         std::cout << '\n';
         func.print();
         std::cout << '\n';
-        auto wht = BF::WH_transform(func);
+        auto wht = BF::WHTransform(func);
         for (auto &i : wht)
         {
             std::cout << i << " ";
@@ -376,7 +376,7 @@ int mainmain()
         std::cout << std::endl;
 
         std::vector<uint32_t> W_1_pos, W_1_neg, W_3_pos, W_3_neg;
-        BF::FillWSets(W_1_pos, W_1_neg, W_3_pos, W_3_neg, wht); // заполняем множесва W соответствующими элементами
+        BF::fillWSets(W_1_pos, W_1_neg, W_3_pos, W_3_neg, wht); // заполняем множесва W соответствующими элементами
 
         auto resPairs = func.pairsToImprove();              // Множество пар улучшающих полученых решением СЛУ
         auto straightPairs = func.pairsToImproveStraight(); // Множество пар улучшающих полученых прямым алгоритмом
@@ -393,7 +393,7 @@ int mainmain()
                 std::cout << std::endl;
         }
 
-        auto badPairs = func.PairsToWorsen();
+        auto badPairs = func.pairsToWorsen();
         std::cout << "\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n";
 
         for (auto &i : badPairs)
@@ -411,7 +411,7 @@ int mainmain()
             return 0;
         }
 
-        std::cout << "\nW3_pos_size= " << W_3_pos.size() << " \nW3_neg_size= " << W_3_neg.size() << " \nNf= " << BF::Nonlinearity(func, wht) << std::endl;
+        std::cout << "\nW3_pos_size= " << W_3_pos.size() << " \nW3_neg_size= " << W_3_neg.size() << " \nNf= " << BF::nonlinearity(func, wht) << std::endl;
         for (auto &i : wht)
         {
             std::cout << i << " ";
@@ -426,7 +426,7 @@ int mainmain()
         std::cin >> x2;
         try
         {
-            func = BF::SwapOnSets(func, x1, x2); // обменять значения на наборах x1, x2
+            func = BF::swapOnSets(func, x1, x2); // обменять значения на наборах x1, x2
         }
         catch (const char *err)
         {
