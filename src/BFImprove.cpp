@@ -7,7 +7,10 @@
 #include <iterator>
 #include <unordered_set>
 
-std::pair<std::vector<unsigned int>, std::vector<unsigned int>> BF::optGoodPairsVec(const BF &func, std::vector<int> &wht_coef)
+namespace bf
+{
+
+std::pair<std::vector<unsigned int>, std::vector<unsigned int>> BF::optGoodPairsVec(std::vector<int> &wht_coef) const
 {
     auto min_max = std::minmax_element(wht_coef.begin(), wht_coef.end());
     int max;
@@ -31,19 +34,19 @@ std::pair<std::vector<unsigned int>, std::vector<unsigned int>> BF::optGoodPairs
     for (int i = 0; i < W_1_neg.size(); i++)
         PairMatrix.push_back(std::make_pair(W_1_neg[i], 1));
 
-    int Rank = countBoolMatrixRankAndStepTransform(PairMatrix, func.n_);
+    int Rank = countBoolMatrixRankAndStepTransform(PairMatrix, n_);
 
     if (Rank == -1)
     {
         return std::pair<std::vector<unsigned int>, std::vector<unsigned int>>();
     }
 
-    auto solutionsFirst = getSolutionsOfSystem(PairMatrix, func.n_);
+    auto solutionsFirst = getSolutionsOfSystem(PairMatrix, n_);
 
     std::vector<uint32_t> finalSolutionsFirst;
 
     for (int i = 0; i < solutionsFirst.size(); i++)
-        if (func[solutionsFirst[i]] == 0)
+        if ((*this)[solutionsFirst[i]] == 0)
             finalSolutionsFirst.push_back(solutionsFirst[i]);
 
     PairMatrix.clear();
@@ -54,18 +57,18 @@ std::pair<std::vector<unsigned int>, std::vector<unsigned int>> BF::optGoodPairs
     for (int i = 0; i < W_1_neg.size(); i++)
         PairMatrix.push_back(std::make_pair(W_1_neg[i], 0));
 
-    Rank = countBoolMatrixRankAndStepTransform(PairMatrix, func.n_);
+    Rank = countBoolMatrixRankAndStepTransform(PairMatrix, n_);
 
     if (Rank == -1)
     {
         return std::pair<std::vector<unsigned int>, std::vector<unsigned int>>();
     }
 
-    auto solutionsSecond = getSolutionsOfSystem(PairMatrix, func.n_);
+    auto solutionsSecond = getSolutionsOfSystem(PairMatrix, n_);
     std::vector<uint32_t> finalSolutionsSecond;
 
     for (int i = 0; i < solutionsSecond.size(); i++)
-        if (func[solutionsSecond[i]] == 1)
+        if ((*this)[solutionsSecond[i]] == 1)
             finalSolutionsSecond.push_back(solutionsSecond[i]);
     std::pair<std::vector<unsigned int>, std::vector<unsigned int>> ResultGoodPairs;
     ResultGoodPairs = std::make_pair(finalSolutionsFirst, finalSolutionsSecond);
@@ -102,21 +105,20 @@ void BF::fillWSets(std::vector<uint32_t> &W_1_pos, std::vector<uint32_t> &W_1_ne
     }
 }
 
-BF BF::swapOnSets(BF &func, uint32_t set_x1, uint32_t set_x2)
+BF BF::swapOnSets(uint32_t set_x1, uint32_t set_x2) const
 {
-    if (set_x1 >= ((uint32_t)1 << func.n_) || set_x2 >= ((uint32_t)1 << func.n_))
+    if (set_x1 >= ((uint32_t)1 << n_) || set_x2 >= ((uint32_t)1 << n_))
     {
         throw "pair is out of range";
     }
-    auto result = func;
-    result.setValue(set_x1, func[set_x2]);
-    result.setValue(set_x2, func[set_x1]);
+    auto result = *this;
+    result.setValue(set_x1, (*this)[set_x2]);
+    result.setValue(set_x2, (*this)[set_x1]);
     return result;
 }
 
-std::pair<std::vector<unsigned int>, std::vector<unsigned int>> BF::goodPairsVec(const BF &func, std::vector<int> &wht_coef)
+std::pair<std::vector<unsigned int>, std::vector<unsigned int>> BF::goodPairsVec(std::vector<int> &wht_coef) const
 {
-    const unsigned int n_ = func.n_;
     auto min_max = std::minmax_element(wht_coef.begin(), wht_coef.end());
     int max;
     if (abs(*min_max.first) > abs(*min_max.second))
@@ -135,7 +137,7 @@ std::pair<std::vector<unsigned int>, std::vector<unsigned int>> BF::goodPairsVec
     std::vector<unsigned int> A_00, B_01, A_11, B_10;
     for (unsigned int curr = 0; curr < 1 << n_; curr++)
     {
-        if (func[curr] == false)
+        if ((*this)[curr] == false)
         {
             int a = 0;
             for (; a < W_1_pos.size(); a++)
@@ -189,7 +191,7 @@ std::pair<std::vector<unsigned int>, std::vector<unsigned int>> BF::goodPairsVec
 
 std::vector<std::pair<uint32_t, uint32_t>> BF::pairsToWorsen() const
 {
-    auto wht_coef = BF::WHTransform(*this);
+    auto wht_coef = WHTransform();
     std::vector<uint32_t> W_1_pos, W_1_neg, W_3_pos, W_3_neg;
     BF::fillWSets(W_1_pos, W_1_neg, W_3_pos, W_3_neg, wht_coef);
 
@@ -267,8 +269,8 @@ std::vector<std::pair<uint32_t, uint32_t>> BF::pairsToWorsen() const
 
 std::vector<std::pair<uint32_t, uint32_t>> BF::pairsToImprove() const
 { // построить множесто пар улучшающих нелинейность
-    auto wht_coef = BF::WHTransform(*this);
-    auto GoodPairs = BF::optGoodPairsVec(*this, wht_coef); // Вернуть пару множеств(2 множества из теоремы слева от разности) с помощью решения СЛУ
+    auto wht_coef = WHTransform();
+    auto GoodPairs = optGoodPairsVec(wht_coef); // Вернуть пару множеств(2 множества из теоремы слева от разности) с помощью решения СЛУ
 
     std::vector<uint32_t> W_1_pos, W_1_neg, W_3_pos, W_3_neg;
     BF::fillWSets(W_1_pos, W_1_neg, W_3_pos, W_3_neg, wht_coef);
@@ -311,8 +313,8 @@ std::vector<std::pair<uint32_t, uint32_t>> BF::pairsToImprove() const
 
 std::vector<std::pair<uint32_t, uint32_t>> BF::pairsToImproveStraight() const // отличие только в том как вычисялются множества слева от разности
 {
-    auto wht_coef = BF::WHTransform(*this);
-    auto GoodPairs = BF::goodPairsVec(*this, wht_coef);
+    auto wht_coef = WHTransform();
+    auto GoodPairs = goodPairsVec(wht_coef);
 
     std::vector<uint32_t> W_1_pos, W_1_neg, W_3_pos, W_3_neg;
     BF::fillWSets(W_1_pos, W_1_neg, W_3_pos, W_3_neg, wht_coef);
@@ -447,7 +449,7 @@ void BF::nonlinearityImprove(uint64_t linDiff, uint64_t &neutralAttemps, uint64_
     {
         return;
     }
-    auto wht_coef = BF::WHTransform(*this);
+    auto wht_coef = WHTransform();
 
     auto tmp = std::roundf((1 << (this->n_ - 1)) - std::pow(2, this->n_ / 2 - 1));
     int Nf_boundaries = this->n_ % 2 == 0 ? tmp - 2 : tmp;
@@ -458,10 +460,10 @@ void BF::nonlinearityImprove(uint64_t linDiff, uint64_t &neutralAttemps, uint64_
     {
 
         std::vector<uint32_t> W_1_pos, W_1_neg, W_3_pos, W_3_neg;
-        wht_coef = BF::WHTransform(*this);
+        wht_coef = WHTransform();
         BF::fillWSets(W_1_pos, W_1_neg, W_3_pos, W_3_neg, wht_coef);
-        auto NF = BF::nonlinearity(*this, wht_coef);
-        if (BF::nonlinearity(*this, wht_coef) >= Nf_boundaries)
+        auto NF = nonlinearity(wht_coef);
+        if (nonlinearity(wht_coef) >= Nf_boundaries)
             break;
 
         bool needToBuildImproveSet = true;
@@ -472,7 +474,7 @@ void BF::nonlinearityImprove(uint64_t linDiff, uint64_t &neutralAttemps, uint64_
             pair = this->generatePair();
             if (this->isImprovePair(W_1_pos, W_1_neg, W_3_pos, W_3_neg, pair))
             {
-                *this = BF::swapOnSets(*this, pair.first, pair.second);
+                *this = swapOnSets(pair.first, pair.second);
                 linDiff -= 2;
                 j = 0;
                 needToBuildImproveSet = false;
@@ -494,7 +496,7 @@ void BF::nonlinearityImprove(uint64_t linDiff, uint64_t &neutralAttemps, uint64_
         if (improvePairs.size() != 0)
         {
             pair = improvePairs[rand() % improvePairs.size()];
-            *this = BF::swapOnSets(*this, pair.first, pair.second);
+            *this = swapOnSets(pair.first, pair.second);
             linDiff -= 2;
             j = 0;
         }
@@ -514,7 +516,7 @@ void BF::nonlinearityImprove(uint64_t linDiff, uint64_t &neutralAttemps, uint64_
             }
             if (foundNeutral)
             {
-                *this = BF::swapOnSets(*this, neutralPair.first, neutralPair.second);
+                *this = swapOnSets(neutralPair.first, neutralPair.second);
             }
             else
             {
@@ -526,3 +528,5 @@ void BF::nonlinearityImprove(uint64_t linDiff, uint64_t &neutralAttemps, uint64_
 
     improveAttemps = 0;
 }
+
+} // namespace bf

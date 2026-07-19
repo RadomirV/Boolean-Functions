@@ -3,30 +3,33 @@
 
 #include <algorithm>
 
-BF BF::mobiusTransform(const BF &func)
+namespace bf
 {
-    unsigned int vec_size = func.vec_.size();
-    std::vector<unsigned int> val = func.vec_;
 
-    if (func.n_ >= 1)
+BF BF::mobiusTransform() const
+{
+    unsigned int vec_size = vec_.size();
+    std::vector<unsigned int> val = vec_;
+
+    if (n_ >= 1)
         for (int i = 0; i < vec_size; ++i)
             val[i] = val[i] ^ ((val[i] << 1) & 0xaaaaaaaa);
-    if (func.n_ >= 2)
+    if (n_ >= 2)
         for (int i = 0; i < vec_size; ++i)
             val[i] = val[i] ^ ((val[i] << 2) & 0xcccccccc);
-    if (func.n_ >= 3)
+    if (n_ >= 3)
         for (int i = 0; i < vec_size; ++i)
             val[i] = val[i] ^ ((val[i] << 4) & 0xf0f0f0f0);
-    if (func.n_ >= 4)
+    if (n_ >= 4)
         for (int i = 0; i < vec_size; ++i)
             val[i] = val[i] ^ ((val[i] << 8) & 0xff00ff00);
-    if (func.n_ >= 5)
+    if (n_ >= 5)
         for (int i = 0; i < vec_size; ++i)
             val[i] = val[i] ^ ((val[i] << 16) & 0xffff0000);
 
-    if (func.n_ > 5)
+    if (n_ > 5)
     {
-        for (unsigned int i = 0; i < func.n_ - 5; ++i)
+        for (unsigned int i = 0; i < n_ - 5; ++i)
         {
             unsigned int half = 1 << i;
 
@@ -37,13 +40,13 @@ BF BF::mobiusTransform(const BF &func)
     }
     BF res;
     res.vec_ = val;
-    res.n_ = func.n_;
+    res.n_ = n_;
     return res;
 }
 
-std::vector<int> BF::WHTransform(const BF &func)
+std::vector<int> BF::WHTransform() const
 {
-    unsigned int size = func.vec_.size();
+    unsigned int size = vec_.size();
 
     std::vector<int> char_vec;
     // make characteristic vector
@@ -51,22 +54,22 @@ std::vector<int> BF::WHTransform(const BF &func)
     {
         for (unsigned int j = 0; j < 32; j++)
         {
-            if (bitValue(func.vec_[i], j))
+            if (bitValue(vec_[i], j))
                 char_vec.push_back(-1);
             else
                 char_vec.push_back(1);
         }
     }
-    if (func.n_ < 5)
+    if (n_ < 5)
     {
-        for (int i = 0; i < 32 - (1 << func.n_); i++)
+        for (int i = 0; i < 32 - (1 << n_); i++)
             char_vec.pop_back();
     }
 
     unsigned int char_vec_size = char_vec.size();
     int sum = 0, dif = 0;
 
-    for (unsigned int i = 0; i < func.n_; ++i)
+    for (unsigned int i = 0; i < n_; ++i)
     {
         unsigned int half = 1 << i;
 
@@ -84,10 +87,10 @@ std::vector<int> BF::WHTransform(const BF &func)
     return char_vec;
 }
 
-std::vector<int> BF::autoCor(const BF &func, std::vector<int> wht_coef)
+std::vector<int> BF::autoCor(std::vector<int> wht_coef) const
 {
     if (wht_coef.empty())
-        wht_coef = BF::WHTransform(func);
+        wht_coef = WHTransform();
     unsigned int size = wht_coef.size();
 
     std::for_each(wht_coef.begin(), wht_coef.end(), [](int &n_)
@@ -95,7 +98,7 @@ std::vector<int> BF::autoCor(const BF &func, std::vector<int> wht_coef)
 
     int sum = 0, dif = 0;
 
-    for (unsigned int i = 0; i < func.n_; ++i)
+    for (unsigned int i = 0; i < n_; ++i)
     {
         unsigned int half = 1 << i;
 
@@ -110,10 +113,11 @@ std::vector<int> BF::autoCor(const BF &func, std::vector<int> wht_coef)
             }
         }
     }
-    unsigned int n_variables = func.n_;
+    unsigned int n_variables = n_;
     std::for_each(wht_coef.begin(), wht_coef.end(), [&n_variables](int &n_)
                   { n_ >>= n_variables; });
 
     return wht_coef;
 }
 
+} // namespace bf

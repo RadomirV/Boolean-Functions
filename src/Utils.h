@@ -4,6 +4,9 @@
 #include <utility>
 #include <vector>
 
+namespace bf
+{
+
 int countBoolMatrixRankAndStepTransform(std::vector<unsigned int> &Matrix, int columns = 32);
 int countBoolMatrixRankAndStepTransform(std::vector<std::pair<unsigned int, uint8_t>> &PairMatrix, int columns = 32);
 bool isMatrixSpecialStepTransform(const std::vector<std::pair<unsigned int, uint8_t>> &PairMatrix, int columns = 32);
@@ -23,3 +26,5 @@ unsigned int uintWeight(unsigned int x);
 bool weightMod(unsigned int x);
 
 unsigned int nextCombination(unsigned int prev);
+
+} // namespace bf

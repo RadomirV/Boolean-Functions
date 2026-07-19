@@ -4,6 +4,9 @@
 #include <bitset>
 #include <cstdlib>
 
+namespace bf
+{
+
 std::pair<BF, BF> BF::generateBorderBalancesFunctions()
 {
     return std::make_pair(BF(std::bitset<32>(0xFFFFFFFF >> (16)).to_string()), BF(std::bitset<32>(((1 << 16) - 1) << (16)).to_string()));
@@ -18,7 +21,7 @@ BF BF::genBalancedFunc(int numberOfVariables) // Генерируем функц
 {
     BF func(numberOfVariables, 10);
 
-    int32_t diff = ((uint32_t)1 << (numberOfVariables - 1)) - BF::weight(func); // разница чего больше единиц или нулей
+    int32_t diff = ((uint32_t)1 << (numberOfVariables - 1)) - func.weight(); // разница чего больше единиц или нулей
 
     while (diff < 0) // если больше единиц, то в случайных местах где f(x)=1 заменить на 0
     {
@@ -60,7 +63,7 @@ BF BF::generateAffine(uint32_t maskOfVariables, bool addOne) const
         mask <<= 1;
     }
     affineFunc.setValue(0, addOne);
-    affineFunc = BF::mobiusTransform(affineFunc);
+    affineFunc = affineFunc.mobiusTransform();
     return affineFunc;
 }
 
@@ -81,16 +84,18 @@ std::pair<uint32_t, uint32_t> BF::generatePair() const
 std::pair<uint32_t, uint32_t> BF::generateImprovePair(uint32_t attemps) const
 {
     std::pair<uint32_t, uint32_t> improvePair;
-    auto wht_coef = BF::WHTransform(*this);
-    auto goodSet = BF::optGoodPairsVec(*this, wht_coef);
+    auto wht_coef = WHTransform();
+    auto goodSet = optGoodPairsVec(wht_coef);
     for (int i = 0; i <= attemps; ++i)
     {
         improvePair.first = goodSet.first[rand() % goodSet.first.size()];
         improvePair.second = goodSet.second[rand() % goodSet.second.size()];
-        if (BF::isImprovePairEasy(wht_coef, improvePair))
+        if (isImprovePairEasy(wht_coef, improvePair))
         {
             return improvePair;
         }
     }
     return std::pair<uint32_t, uint32_t>();
 }
+
+} // namespace bf

@@ -6,6 +6,9 @@
 #include <iostream>
 #include <limits>
 
+namespace bf
+{
+
 BF::BF()
 {
     unsigned int n_ = 1;
@@ -202,11 +205,11 @@ bool BF::operator!=(const BF &func) const
     return false;
 }
 
-bool BF::getValue(const BF &func, unsigned int x_set)
+bool BF::getValue(unsigned int x_set) const
 {
     unsigned int ix = x_set >> 5;
     unsigned int bit = x_set & 0x0000001f;
-    return bitValue(func.vec_[ix], bit);
+    return bitValue(vec_[ix], bit);
 }
 
 bool BF::operator[](unsigned int x_set) const
@@ -231,3 +234,4 @@ std::vector<unsigned int> BF::values()
     return this->vec_;
 }
 
+} // namespace bf

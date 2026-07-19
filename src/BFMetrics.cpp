@@ -5,23 +5,26 @@
 #include <cmath>
 #include <iostream>
 
-unsigned int BF::weight(const BF &a)
+namespace bf
 {
-    unsigned int size = a.vec_.size();
+
+unsigned int BF::weight() const
+{
+    unsigned int size = vec_.size();
     uint32_t total_weight = 0;
 
     for (int i = 0; i < size; ++i)
     {
-        total_weight += uintWeight(a.vec_[i]);
+        total_weight += uintWeight(vec_[i]);
     }
 
     return total_weight;
 }
 
-void BF::printANF(const BF &func)
+void BF::printANF() const
 {
-    unsigned int curr = 0, size = func.vec_.size();
-    int count_zero = std::count_if(func.vec_.begin(), func.vec_.end(), [](int i)
+    unsigned int curr = 0, size = vec_.size();
+    int count_zero = std::count_if(vec_.begin(), vec_.end(), [](int i)
                                    { return i == 0; });
     if (count_zero == size)
     {
@@ -33,7 +36,7 @@ void BF::printANF(const BF &func)
         {
             curr = i << 5;
             curr += j;
-            if (bitValue(func.vec_[i], j))
+            if (bitValue(vec_[i], j))
             {
                 printMonom(curr);
                 std::cout << " + ";
@@ -41,10 +44,10 @@ void BF::printANF(const BF &func)
         }
 }
 
-unsigned int BF::degree(const BF &func)
+unsigned int BF::degree() const
 {
 
-    unsigned int max = 0, size = func.vec_.size();
+    unsigned int max = 0, size = vec_.size();
 
     unsigned int weight = 0, curr_val = 0;
     for (int i = size - 1; i >= 0; i--)
@@ -54,7 +57,7 @@ unsigned int BF::degree(const BF &func)
         {
             curr_val = i << 5;
             curr_val += j;
-            if (bitValue(func.vec_[i], j))
+            if (bitValue(vec_[i], j))
             {
                 weight = uintWeight(curr_val);
                 if (weight > max)
@@ -65,7 +68,7 @@ unsigned int BF::degree(const BF &func)
     return max;
 }
 
-unsigned int BF::correlationImmunity(const BF &func, std::vector<int> &WHT_coef)
+unsigned int BF::correlationImmunity(std::vector<int> &WHT_coef) const
 {
 
     auto gen_limits = [](unsigned int n_, unsigned int k) -> std::pair<unsigned int, unsigned int>
@@ -74,13 +77,13 @@ unsigned int BF::correlationImmunity(const BF &func, std::vector<int> &WHT_coef)
     };
 
     if (WHT_coef.empty())
-        WHT_coef = WHTransform(func);
+        WHT_coef = WHTransform();
 
     int i = 1;
 
-    for (; i <= func.n_; i++)
+    for (; i <= n_; i++)
     {
-        auto limits = gen_limits(func.n_, i);
+        auto limits = gen_limits(n_, i);
         unsigned int current = limits.first;
 
         if (WHT_coef[current] != 0)
@@ -93,13 +96,13 @@ unsigned int BF::correlationImmunity(const BF &func, std::vector<int> &WHT_coef)
                 return i - 1;
         }
     }
-    return func.n_;
+    return n_;
 }
 
-unsigned int BF::nonlinearity(const BF &func, std::vector<int> &WHT)
+unsigned int BF::nonlinearity(std::vector<int> &WHT) const
 {
     if (WHT.empty())
-        WHT = WHTransform(func);
+        WHT = WHTransform();
     auto min_max = std::minmax_element(WHT.begin(), WHT.end());
     int max = 0;
     if (abs(*min_max.first) > abs(*min_max.second))
@@ -107,13 +110,13 @@ unsigned int BF::nonlinearity(const BF &func, std::vector<int> &WHT)
     else
         max = abs(*min_max.second);
 
-    return (1 << (func.n_ - 1)) - (max >> 1);
+    return (1 << (n_ - 1)) - (max >> 1);
 }
 
-void BF::printBAA(const BF &func, std::vector<int> &WHT)
+void BF::printBAA(std::vector<int> &WHT) const
 {
     if (WHT.empty())
-        WHT = WHTransform(func);
+        WHT = WHTransform();
 
     auto min_max = std::minmax_element(WHT.begin(), WHT.end());
     unsigned int max_pos = 0;
@@ -131,10 +134,10 @@ void BF::printBAA(const BF &func, std::vector<int> &WHT)
         std::cout << "1";
 }
 
-int BF::cnF(const BF &func, std::vector<int> &auto_cor)
+int BF::cnF(std::vector<int> &auto_cor) const
 {
     if (auto_cor.empty())
-        auto_cor = BF::autoCor(func, std::vector<int>());
+        auto_cor = autoCor(std::vector<int>());
 
     auto min_max = std::minmax_element(auto_cor.begin() + 1, auto_cor.end());
     int max = 0;
@@ -143,13 +146,13 @@ int BF::cnF(const BF &func, std::vector<int> &auto_cor)
     else
         max = abs(*min_max.second);
 
-    return ((1 << (func.n_ - 2)) - (max >> 2));
+    return ((1 << (n_ - 2)) - (max >> 2));
 }
 
-unsigned int BF::propagationCriteria(const BF &func, std::vector<int> &auto_cor)
+unsigned int BF::propagationCriteria(std::vector<int> &auto_cor) const
 {
     if (auto_cor.empty())
-        auto_cor = BF::autoCor(func, std::vector<int>());
+        auto_cor = autoCor(std::vector<int>());
 
     auto gen_limits = [](unsigned int n_, unsigned int k) -> std::pair<unsigned int, unsigned int>
     {
@@ -158,9 +161,9 @@ unsigned int BF::propagationCriteria(const BF &func, std::vector<int> &auto_cor)
 
     int i = 1;
 
-    for (; i <= func.n_; i++)
+    for (; i <= n_; i++)
     {
-        auto limits = gen_limits(func.n_, i);
+        auto limits = gen_limits(n_, i);
         unsigned int current = limits.first;
 
         if (auto_cor[current] != 0)
@@ -173,7 +176,7 @@ unsigned int BF::propagationCriteria(const BF &func, std::vector<int> &auto_cor)
                 return i - 1;
         }
     }
-    return func.n_;
+    return n_;
 }
 
-
+} // namespace bf

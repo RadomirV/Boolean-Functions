@@ -5,6 +5,8 @@
 #include "BF.h"
 #include "Utils.h"
 
+using namespace bf;
+
 TEST(BFUtilsTest, BitOperations)
 {
     EXPECT_EQ(countFirstZeros(0), 0u);
@@ -211,9 +213,9 @@ TEST(BFCoreTest, ConstructFromStringAndWeight)
 {
     BF f("0001");
     EXPECT_EQ(f.getNumberOfVariables(), 2);
-    EXPECT_EQ(BF::weight(f), 1u);
-    EXPECT_FALSE(BF::getValue(f, 0));
-    EXPECT_TRUE(BF::getValue(f, 3));
+    EXPECT_EQ(f.weight(), 1u);
+    EXPECT_FALSE(f.getValue(0));
+    EXPECT_TRUE(f.getValue(3));
 }
 
 TEST(BFCoreTest, SetAndGetValue)
@@ -231,8 +233,8 @@ TEST(BFCoreTest, MobiusTransformIsSelfInverse)
     for (int i = 0; i <= 5; ++i)
     {
         BF f(10, 2);
-        BF transformed = BF::mobiusTransform(f);
-        BF restored = BF::mobiusTransform(transformed);
+        BF transformed = f.mobiusTransform();
+        BF restored = transformed.mobiusTransform();
         EXPECT_EQ(restored, f);
     }
 }
@@ -240,7 +242,7 @@ TEST(BFCoreTest, MobiusTransformIsSelfInverse)
 TEST(BFCoreTest, WalshTransformForZeroFunction)
 {
     BF f(3, 0);
-    std::vector<int> wht = BF::WHTransform(f);
+    std::vector<int> wht = f.WHTransform();
     ASSERT_EQ(wht.size(), 8u);
     EXPECT_EQ(wht[0], 8);
     for (size_t i = 1; i < wht.size(); ++i)
@@ -259,7 +261,7 @@ static std::vector<int> WalshTransformByDefinition(const BF &f, int n)
         int sum = 0;
         for (unsigned int x = 0; x < size; ++x)
         {
-            const bool fx = BF::getValue(f, x);
+            const bool fx = f.getValue(x);
             const bool ax = weightMod(a & x);
             sum += (fx ^ ax) ? -1 : 1;
         }
@@ -277,7 +279,7 @@ TEST(BFCoreTest, WalshTransformMatchesDefinition)
         BF f(n, 2);
 
         const std::vector<int> expected = WalshTransformByDefinition(f, n);
-        const std::vector<int> actual = BF::WHTransform(f);
+        const std::vector<int> actual = f.WHTransform();
 
         ASSERT_EQ(actual.size(), expected.size());
         EXPECT_EQ(actual, expected);
@@ -292,7 +294,7 @@ TEST(BFCoreTest, WalshTransformParsevalIdentity)
         BF f(n, 2);
         const unsigned int size = 1u << n;
 
-        const std::vector<int> wht = BF::WHTransform(f);
+        const std::vector<int> wht = f.WHTransform();
         long long energy = 0;
         for (int v : wht)
             energy += static_cast<long long>(v) * v;
@@ -304,13 +306,13 @@ TEST(BFCoreTest, WalshTransformParsevalIdentity)
 TEST(BFCoreTest, AffineFunctionHasZeroNonlinearity)
 {
     BF f("01010101");
-    std::vector<int> wht = BF::WHTransform(f);
-    EXPECT_EQ(BF::nonlinearity(f, wht), 0u);
+    std::vector<int> wht = f.WHTransform();
+    EXPECT_EQ(f.nonlinearity(wht), 0u);
 }
 
 TEST(BFCoreTest, DegreeForMonomialX0X1)
 {
     BF f("00010001");
-    BF anf = BF::mobiusTransform(f);
-    EXPECT_EQ(BF::degree(anf), 2u);
+    BF anf = f.mobiusTransform();
+    EXPECT_EQ(anf.degree(), 2u);
 }

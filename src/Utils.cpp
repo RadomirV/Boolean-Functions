@@ -4,6 +4,9 @@
 #include <iostream>
 
 
+namespace bf
+{
+
 uint32_t countFirstZeros(uint32_t x)
 {
     if (x == 0)
@@ -292,3 +295,5 @@ std::vector<uint32_t> getSolutionsOfSystem(const std::vector<std::pair<uint32_t,
 
     return solutions;
 }
+
+} // namespace bf
